@@ -47,6 +47,31 @@ class AppStore {
 
 // UI Controller
 document.addEventListener('DOMContentLoaded', () => {
+    // -- AUTHENTICATION LOGIC --
+    const loginOverlay = document.getElementById('loginOverlay');
+    const loginForm = document.getElementById('loginForm');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginError = document.getElementById('loginError');
+
+    if (localStorage.getItem('apex_auth') === 'true') {
+        loginOverlay.classList.add('hidden');
+    } else {
+        loginPassword.focus();
+    }
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (loginPassword.value === 'matos42') {
+            localStorage.setItem('apex_auth', 'true');
+            loginOverlay.classList.add('hidden');
+            loginError.style.display = 'none';
+        } else {
+            loginError.style.display = 'block';
+            loginPassword.value = '';
+            loginPassword.focus();
+        }
+    });
+
     const store = new AppStore();
     let selectedIds = new Set();
     let currentFilter = 'all';

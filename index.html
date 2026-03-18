@@ -9,6 +9,22 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Login Screen -->
+    <div id="loginOverlay">
+        <div class="login-box glass-panel" style="width: 100%; max-width: 380px; padding: 32px; text-align: center; display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 8px;">
+                <img src="apex.png" alt="Logo APEX" style="height: 64px; width: auto; object-fit: contain;">
+                <h2>La cave de l'Apex</h2>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">Veuillez saisir le mot de passe pour accéder à l'inventaire.</p>
+            <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px;">
+                <input type="password" id="loginPassword" placeholder="Mot de passe" required style="background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px 14px; color: var(--text-primary); font-family: var(--font-main); outline: none; text-align: center; font-size: 1.1rem; letter-spacing: 2px;">
+                <button type="submit" class="btn btn-primary full-width" style="margin-top: 0;">Déverrouiller</button>
+                <div id="loginError" style="color: var(--state-hs); font-size: 0.85rem; display: none;">Mot de passe incorrect.</div>
+            </form>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar glass-panel">
