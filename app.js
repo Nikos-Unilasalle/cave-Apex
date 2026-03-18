@@ -1,6 +1,4 @@
-const supabaseUrl = 'https://vrfmghmdwbsadgovljoc.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZm1naG1kd2JzYWRnb3Zsam9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjM5MDUsImV4cCI6MjA4OTM5OTkwNX0.P-7nx1l0C-pGjJTMUOdeeYH-MQ1WNtz1_Ed6F0mqkWA';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+let supabase = null;
 
 class AppStore {
     constructor() {
@@ -9,10 +7,26 @@ class AppStore {
     }
 
     async init() {
-        await Promise.all([
-            this.fetchCategories(),
-            this.fetchItems()
-        ]);
+        try {
+            const supabaseUrl = 'https://vrfmghmdwbsadgovljoc.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZm1naG1kd2JzYWRnb3Zsam9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjM5MDUsImV4cCI6MjA4OTM5OTkwNX0.P-7nx1l0C-pGjJTMUOdeeYH-MQ1WNtz1_Ed6F0mqkWA';
+            
+            // Check if CDN loaded correctly
+            if (window.supabase) {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            } else {
+                console.error("Erreur: Supabase n'est pas chargé (bloqué par le navigateur ou hors ligne).");
+                alert("Erreur de connexion à la base de données. L'application marchera en mode hors-ligne dégradé.");
+                return;
+            }
+
+            await Promise.all([
+                this.fetchCategories(),
+                this.fetchItems()
+            ]);
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     async fetchCategories() {
@@ -64,6 +78,7 @@ class AppStore {
     }
 
     async updateItem(item) {
+        if(!supabase) return;
         const { error } = await supabase.from('items').update(item).eq('id', item.id);
         if (!error) {
             this.items = this.items.map(i => i.id === item.id ? item : i);
@@ -79,12 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loginPassword = document.getElementById('loginPassword');
     const loginError = document.getElementById('loginError');
 
-    if (localStorage.getItem('apex_auth') === 'true') {
-        loginOverlay.classList.add('hidden');
-    } else {
-        loginPassword.focus();
-    }
-
+    // Attach event listener immediately so authentication form ALWAYS works
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (loginPassword.value === 'matos42') {
@@ -97,6 +107,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             loginPassword.focus();
         }
     });
+
+    if (localStorage.getItem('apex_auth') === 'true') {
+        loginOverlay.classList.add('hidden');
+    } else {
+        loginPassword.focus();
+    }
 
     // DOM Elements
     const grid = document.getElementById('inventoryGrid');
