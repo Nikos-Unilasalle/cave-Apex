@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modals
     const modalAdd = document.getElementById('modalAdd');
     const modalBorrow = document.getElementById('modalBorrow');
+    const modalEdit = document.getElementById('modalEdit');
 
     // Add New Modal Elements
     const btnAddNew = document.getElementById('btnAddNew');
@@ -94,6 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const addCatSelector = document.getElementById('addCategorySelector');
     const btnNewDocCat = document.getElementById('btnNewDocCat');
     const addNewCategory = document.getElementById('addNewCategory');
+
+    // Edit Modal Elements
+    const formEdit = document.getElementById('formEdit');
+    const editCategorySelector = document.getElementById('editCategorySelector');
 
     // Borrow / Return Elements
     const btnBorrowSelected = document.getElementById('btnBorrowSelected');
@@ -261,14 +266,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // -- ADD NEW LOGIC --
     function updateCategorySelectors() {
+        const currentFilterValue = categoryFilter.value;
         addCatSelector.innerHTML = '';
+        editCategorySelector.innerHTML = '';
+        categoryFilter.innerHTML = '<option value="all">Toutes les catégories</option>';
+        
         store.categories.forEach(cat => {
             let op = document.createElement('option');
             op.value = cat;
             op.textContent = cat;
             addCatSelector.appendChild(op);
+            
+            let opEdit = document.createElement('option');
+            opEdit.value = cat;
+            opEdit.textContent = cat;
+            editCategorySelector.appendChild(opEdit);
+            
+            let opFilter = document.createElement('option');
+            opFilter.value = cat;
+            opFilter.textContent = cat;
+            categoryFilter.appendChild(opFilter);
         });
-
         // Update chips
         categoryChips.innerHTML = '';
         
@@ -371,6 +389,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // -- EDIT LOGIC --
+    formEdit.addEventListener('submit', (e) => {
+        e.preventDefault();
+        store.items = store.items.map(item => {
+            if (item.id === rightClickedItemId) {
+                return {
+                    ...item,
+                    name: document.getElementById('editName').value,
+                    code: document.getElementById('editCode').value,
+                    category: editCategorySelector.value
+                };
+            }
+            return item;
+        });
+        store.save();
+        modalEdit.classList.remove('active');
+        renderGrid(searchInput.value);
+    });
+
     // -- BORROW LOGIC --
     btnBorrowSelected.addEventListener('click', () => {
         borrowCountLabel.textContent = selectedIds.size;
@@ -427,6 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             modalAdd.classList.remove('active');
             modalBorrow.classList.remove('active');
+            modalEdit.classList.remove('active');
         });
     });
 
@@ -435,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(e.target === overlay) {
                 modalAdd.classList.remove('active');
                 modalBorrow.classList.remove('active');
+                modalEdit.classList.remove('active');
             }
         });
     });
@@ -453,7 +492,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const action = actionItem.dataset.action;
         
-        if (action === 'delete') {
+        if (action === 'edit') {
+            const itemToEdit = store.items.find(i => i.id === rightClickedItemId);
+            if (itemToEdit) {
+                document.getElementById('editName').value = itemToEdit.name;
+                document.getElementById('editCode').value = itemToEdit.code;
+                editCategorySelector.value = itemToEdit.category;
+                modalEdit.classList.add('active');
+            }
+        } else if (action === 'delete') {
             if(confirm('Êtes-vous sûr de vouloir supprimer définitivement ce matériel ?')) {
                 store.items = store.items.filter(i => i.id !== rightClickedItemId);
                 store.save();

@@ -175,8 +175,38 @@
             <span class="status-dot" style="background: var(--state-non);"></span> Non Empruntable
         </div>
         <div class="menu-divider"></div>
+        <div class="menu-item" data-action="edit">
+            <span class="material-icons-round" style="color: var(--accent-primary);">edit</span> Modifier
+        </div>
         <div class="menu-item text-danger" data-action="delete">
             <span class="material-icons-round">delete</span> Supprimer
+        </div>
+    </div>
+
+    <!-- Modal: Edit Item -->
+    <div class="modal-overlay" id="modalEdit">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Modifier l'équipement</h3>
+                <button class="close-btn"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEdit">
+                    <div class="form-group">
+                        <label>Nom du matériel</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input type="text" id="editCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        <select id="editCategorySelector"></select>
+                    </div>
+                    <button type="submit" class="btn btn-primary full-width">Enregistrer les modifications</button>
+                </form>
+            </div>
         </div>
     </div>
 
