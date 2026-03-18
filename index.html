@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La cave de l'Apex</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <img src="apex.png" alt="Logo APEX" style="height: 38px; width: auto; object-fit: contain;">
+                <h2>La cave de l'Apex</h2>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-view="inventory">
+                    <span class="material-icons-round">inventory_2</span> Inventaire
+                </a>
+                <a href="#" class="nav-item" data-view="loans">
+                    <span class="material-icons-round">assignment_turned_in</span> Emprunts
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar glass-panel" style="height: auto; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="search-box">
+                        <span class="material-icons-round">search</span>
+                        <input type="text" id="searchInput" placeholder="Rechercher par nom ou code...">
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" id="btnAddNew">
+                            <span class="material-icons-round">add</span> Nouveau Matériel
+                        </button>
+                    </div>
+                </div>
+                <div id="categoryChips" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <!-- JS populated -->
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Selection Actions Bar (Hidden by default) -->
+                <div class="selection-bar glass-panel" id="selectionBar">
+                    <span id="selectionCount">0 séléctionné(s)</span>
+                    <div class="selection-actions">
+                        <button class="btn btn-success" id="btnBorrowSelected" style="display:none;">Emprunter</button>
+                        <button class="btn btn-warning" id="btnReturnSelected" style="display:none;">Retourner (Dispo)</button>
+                        <button class="btn btn-text" id="btnClearSelection">Annuler</button>
+                    </div>
+                </div>
+
+                <!-- Inventory Grid -->
+                <div class="inventory-grid" id="inventoryGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Add New Item -->
+    <div class="modal-overlay" id="modalAdd">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Ajouter un équipement</h3>
+                <button class="close-btn"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAdd">
+                    <div class="form-group">
+                        <label>Nom du matériel</label>
+                        <input type="text" id="addName" required>
+                    </div>
+                    <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+                        <div style="flex: 2; display: flex; flex-direction: column; gap: 8px;">
+                            <label style="font-size: 0.9rem; color: var(--text-secondary);">Code (base, ex: VR)</label>
+                            <input type="text" id="addCode" style="background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px 14px; color: var(--text-primary); outline: none;" required>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                            <label style="font-size: 0.9rem; color: var(--text-secondary);">Quantité</label>
+                            <input type="number" id="addQuantity" min="1" value="1" style="background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px 14px; color: var(--text-primary); outline: none;" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie</label>
+                        <div class="input-with-action">
+                            <select id="addCategorySelector">
+                                <!-- Populated by JS -->
+                            </select>
+                            <button type="button" class="btn btn-icon" id="btnNewDocCat" title="Nouvelle catégorie">
+                                <span class="material-icons-round">add</span>
+                            </button>
+                        </div>
+                        <input type="text" id="addNewCategory" class="hidden" placeholder="Nom de la nouvelle catégorie">
+                    </div>
+                    <div class="form-group">
+                        <label>État initial</label>
+                        <select id="addState">
+                            <option value="dispo">Disponible</option>
+                            <option value="HS">Hors Service</option>
+                            <option value="non_empruntable">Non Empruntable</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary full-width">Ajouter à l'inventaire</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Borrow Items -->
+    <div class="modal-overlay" id="modalBorrow">
+        <div class="modal glass-panel">
+            <div class="modal-header">
+                <h3>Détails de l'emprunt</h3>
+                <button class="close-btn"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formBorrow">
+                    <p class="subtitle" style="margin-bottom: 16px; color: var(--text-secondary);">
+                        Emprunt de <strong id="borrowCountLabel" style="color: var(--text-primary);">0</strong> élément(s).
+                    </p>
+                    <div class="form-group">
+                        <label>Prénom de l'emprunteur</label>
+                        <input type="text" id="borrowFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nom de l'emprunteur</label>
+                        <input type="text" id="borrowLastName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date de retour prévue</label>
+                        <input type="date" id="borrowReturnDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Raison de l'emprunt (optionnel)</label>
+                        <textarea id="borrowReason" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success full-width">Confirmer l'emprunt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
