@@ -101,6 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const borrowCountLabel = document.getElementById('borrowCountLabel');
     const btnReturnSelected = document.getElementById('btnReturnSelected');
 
+    // Context Menu
+    const contextMenu = document.getElementById('contextMenu');
+    let rightClickedItemId = null;
+
     // Init App
     renderGrid();
     updateCategorySelectors();
@@ -207,6 +211,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     updateSelectionBar();
                 }
+            });
+
+            // Right Click Logic
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                rightClickedItemId = item.id;
+                
+                contextMenu.style.left = `${e.clientX}px`;
+                contextMenu.style.top = `${e.clientY}px`;
+                contextMenu.classList.remove('hidden');
+                
+                // Adjust if menu goes outside viewport
+                const rect = contextMenu.getBoundingClientRect();
+                if (rect.right > window.innerWidth) contextMenu.style.left = `${window.innerWidth - rect.width - 10}px`;
+                if (rect.bottom > window.innerHeight) contextMenu.style.top = `${window.innerHeight - rect.height - 10}px`;
             });
 
             grid.appendChild(card);
@@ -418,5 +437,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalBorrow.classList.remove('active');
             }
         });
+    });
+
+    // -- CONTEXT MENU EVENTS --
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) {
+            contextMenu.classList.add('hidden');
+        }
+    });
+
+    contextMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const actionItem = e.target.closest('.menu-item');
+        if (!actionItem || !rightClickedItemId) return;
+        
+        const action = actionItem.dataset.action;
+        
+        if (action === 'delete') {
+            if(confirm('Êtes-vous sûr de vouloir supprimer définitivement ce matériel ?')) {
+                store.items = store.items.filter(i => i.id !== rightClickedItemId);
+                store.save();
+                selectedIds.delete(rightClickedItemId);
+                updateSelectionBar();
+                renderGrid(searchInput.value);
+            }
+        } else if (action.startsWith('state-')) {
+            const newState = action.split('state-')[1];
+            store.updateStates([rightClickedItemId], newState, null);
+            selectedIds.delete(rightClickedItemId);
+            updateSelectionBar();
+            renderGrid(searchInput.value);
+        }
+        
+        contextMenu.classList.add('hidden');
     });
 });

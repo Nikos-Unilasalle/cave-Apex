@@ -163,6 +163,23 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu glass-panel hidden">
+        <div class="menu-item" data-action="state-dispo">
+            <span class="status-dot" style="background: var(--state-dispo);"></span> Disponible
+        </div>
+        <div class="menu-item" data-action="state-HS">
+            <span class="status-dot" style="background: var(--state-hs);"></span> Hors Service
+        </div>
+        <div class="menu-item" data-action="state-non_empruntable">
+            <span class="status-dot" style="background: var(--state-non);"></span> Non Empruntable
+        </div>
+        <div class="menu-divider"></div>
+        <div class="menu-item text-danger" data-action="delete">
+            <span class="material-icons-round">delete</span> Supprimer
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
