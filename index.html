@@ -220,7 +220,7 @@
     </div>
 
     <script>
-let supabase = null;
+let supabaseClient = null;
 
 class AppStore {
     constructor() {
@@ -235,7 +235,7 @@ class AppStore {
             
             // Check if CDN loaded correctly
             if (window.supabase) {
-                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             } else {
                 console.error("Erreur: Supabase n'est pas chargé (bloqué par le navigateur ou hors ligne).");
                 alert("Erreur de connexion à la base de données. L'application marchera en mode hors-ligne dégradé.");
@@ -252,31 +252,31 @@ class AppStore {
     }
 
     async fetchCategories() {
-        const { data, error } = await supabase.from('categories').select('*');
+        const { data, error } = await supabaseClient.from('categories').select('*');
         if (data) this.categories = data.map(c => c.name);
     }
 
     async fetchItems() {
         // Order by created time loosely by ordering by ID 
-        const { data, error } = await supabase.from('items').select('*').order('id', { ascending: false });
+        const { data, error } = await supabaseClient.from('items').select('*').order('id', { ascending: false });
         if (data) Object.assign(this.items, data);
     }
 
     async addItem(item) {
-        const { error } = await supabase.from('items').insert([item]);
+        const { error } = await supabaseClient.from('items').insert([item]);
         if (!error) this.items.unshift(item);
         else console.error("Error adding item", error);
     }
 
     async addCategory(catName) {
         if (!this.categories.includes(catName)) {
-            const { error } = await supabase.from('categories').insert([{ name: catName }]);
+            const { error } = await supabaseClient.from('categories').insert([{ name: catName }]);
             if (!error) this.categories.push(catName);
         }
     }
 
     async updateStates(ids, newState, borrowInfo = null) {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('items')
             .update({ state: newState, borrowInfo: borrowInfo })
             .in('id', ids);
@@ -293,15 +293,15 @@ class AppStore {
     }
 
     async deleteItem(id) {
-        const { error } = await supabase.from('items').delete().eq('id', id);
+        const { error } = await supabaseClient.from('items').delete().eq('id', id);
         if (!error) {
             this.items = this.items.filter(i => i.id !== id);
         }
     }
 
     async updateItem(item) {
-        if(!supabase) return;
-        const { error } = await supabase.from('items').update(item).eq('id', item.id);
+        if(!supabaseClient) return;
+        const { error } = await supabaseClient.from('items').update(item).eq('id', item.id);
         if (!error) {
             this.items = this.items.map(i => i.id === item.id ? item : i);
         }
