@@ -97,10 +97,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Attach event listener immediately so authentication form ALWAYS works
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (loginPassword.value === 'matos42') {
-            localStorage.setItem('apex_auth', 'true');
+        if (loginPassword.value.trim() === 'matos42') {
+            // Hide the overlay immediately so it responds visually
             loginOverlay.classList.add('hidden');
             loginError.style.display = 'none';
+            // Then attempt to save it, catching potential strict browser SecurityErrors (like Safari on local files)
+            try { localStorage.setItem('apex_auth', 'true'); } catch(err) {}
         } else {
             loginError.style.display = 'block';
             loginPassword.value = '';
@@ -108,9 +110,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    if (localStorage.getItem('apex_auth') === 'true') {
-        loginOverlay.classList.add('hidden');
-    } else {
+    try {
+        if (localStorage.getItem('apex_auth') === 'true') {
+            loginOverlay.classList.add('hidden');
+        } else {
+            loginPassword.focus();
+        }
+    } catch(err) {
         loginPassword.focus();
     }
 
