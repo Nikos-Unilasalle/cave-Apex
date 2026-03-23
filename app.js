@@ -54,20 +54,46 @@ class AppStore {
     }
 
     async updateStates(ids, newState, borrowInfo = null) {
-        const { error } = await supabaseClient
-            .from('items')
-            .update({ state: newState, borrowInfo: borrowInfo })
-            .in('id', ids);
+        let hasErrors = false;
+        
+        for (let id of ids) {
+            let item = this.items.find(i => i.id === id);
+            if (!item) continue;
             
-        if (!error) {
-            this.items = this.items.map(item => {
-                if (ids.includes(item.id)) {
-                    item.state = newState;
-                    item.borrowInfo = borrowInfo;
-                }
-                return item;
-            });
+            let history = (item.borrowInfo && item.borrowInfo.history) ? item.borrowInfo.history : [];
+            let newBorrowInfo = null;
+            
+            if (item.state === 'emprunte' && newState !== 'emprunte' && item.borrowInfo && item.borrowInfo.firstName) {
+                history.push({
+                    firstName: item.borrowInfo.firstName,
+                    lastName: item.borrowInfo.lastName,
+                    startDate: item.borrowInfo.startDate,
+                    endDate: item.borrowInfo.date,
+                    reason: item.borrowInfo.reason,
+                    actualReturnDate: new Date().toISOString().split('T')[0]
+                });
+            }
+            
+            if (newState === 'emprunte') {
+                newBorrowInfo = { ...borrowInfo, history: history };
+            } else {
+                newBorrowInfo = { history: history };
+            }
+            
+            const { error } = await supabaseClient
+                .from('items')
+                .update({ state: newState, borrowInfo: newBorrowInfo })
+                .eq('id', id);
+                
+            if (!error) {
+                item.state = newState;
+                item.borrowInfo = newBorrowInfo;
+            } else {
+                console.error("Erreur update item", id, error);
+                hasErrors = true;
+            }
         }
+        if (hasErrors) alert("Certains éléments n'ont pas pu être mis à jour.");
     }
 
     async deleteItem(id) {
@@ -228,11 +254,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const conf = getStatusConfig(item.state);
             
             let borrowHTML = '';
-            if (item.state === 'emprunte' && item.borrowInfo) {
+            if (item.state === 'emprunte' && item.borrowInfo && item.borrowInfo.firstName) {
                 borrowHTML = `
                     <div class="borrow-info">
                         Emprunté par <strong>${item.borrowInfo.firstName} ${item.borrowInfo.lastName}</strong><br>
-                        Retour: <strong>${item.borrowInfo.date}</strong>
+                        Départ: <strong>${item.borrowInfo.startDate ? item.borrowInfo.startDate : '?'}</strong> | Retour: <strong>${item.borrowInfo.date}</strong>
                         ${item.borrowInfo.reason ? `<br><span style="opacity: 0.8; font-size: 0.8rem;">${item.borrowInfo.reason}</span>` : ''}
                     </div>`;
             }
@@ -472,6 +498,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // BORROW
     btnBorrowSelected.addEventListener('click', () => {
         borrowCountLabel.textContent = selectedIds.size;
+        
+        const today = new Date();
+        document.getElementById('borrowStartDate').valueAsDate = today;
+        
         const targetDate = new Date();
         targetDate.setDate(targetDate.getDate() + 7);
         document.getElementById('borrowReturnDate').valueAsDate = targetDate;
@@ -491,6 +521,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const info = {
                 firstName: document.getElementById('borrowFirstName').value,
                 lastName: document.getElementById('borrowLastName').value,
+                startDate: document.getElementById('borrowStartDate').value,
                 date: document.getElementById('borrowReturnDate').value,
                 reason: document.getElementById('borrowReason').value
             };
@@ -597,5 +628,51 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateSelectionBar();
             renderGrid(searchInput.value);
         }
+    });
+
+    document.getElementById('exportHistoryBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const rows = [];
+        rows.push(["Nom du materiel", "Code", "Categorie", "Emprunteur", "Date de depart", "Date de retour prevue", "Date de retour reelle", "Raison"]);
+        
+        store.items.forEach(item => {
+            let history = (item.borrowInfo && item.borrowInfo.history) ? item.borrowInfo.history : [];
+            
+            history.forEach(loan => {
+                rows.push([
+                    item.name || '',
+                    item.code || '',
+                    item.category || '',
+                    `${loan.firstName || ''} ${loan.lastName || ''}`,
+                    loan.startDate || '',
+                    loan.endDate || '',
+                    loan.actualReturnDate || '',
+                    loan.reason || ''
+                ]);
+            });
+            
+            if (item.state === 'emprunte' && item.borrowInfo && item.borrowInfo.firstName) {
+                rows.push([
+                    item.name || '',
+                    item.code || '',
+                    item.category || '',
+                    `${item.borrowInfo.firstName || ''} ${item.borrowInfo.lastName || ''}`,
+                    item.borrowInfo.startDate || '',
+                    item.borrowInfo.date || '',
+                    'Non retourné',
+                    item.borrowInfo.reason || ''
+                ]);
+            }
+        });
+        
+        const csvContent = "data:text/csv;charset=utf-8," + rows.map(r => r.map(field => `"${(field || '').toString().replace(/"/g, '""')}"`).join(",")).join("\\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `historique_emprunts_${new Date().toLocaleDateString('fr-FR').replace(/\\//g,'-')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     });
 });
